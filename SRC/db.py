@@ -5,26 +5,39 @@ import re
 from sqlalchemy import create_engine, text 
 from urllib.parse import quote_plus
 
-SERVIDOR = r"D18S22-1252889\VINI_BANCO"
-BANCO = "HamburgueriaBrasa"
+SERVIDOR = r"brasa-vini.database.windows.net"
+BANCO = "hamburgueriaBrasa"
 DRIVE = "ODBC Driver 18 for SQL Server"
 
 #Outro metodo de Login
 Usuario = "sa"
-Senha= "Senai@134"
+Senha= "Senai@134" 
 
+def ler_segredos():
+    try:
+        return st.secrets['banco']
+    except Exception:
+        return None 
 
-
+@st.cache_resource
 def conectar():
-    # AAutenticação via windows utilizando ODBC
+    # Autenticação via windows utilizando ODBC 
+    banco = ler_segredos()
+    print(banco)
+    if banco :
+        driver = banco.get("driver", "ODBC driver 17 for SQL Server")
+        odbc = (
+            f"DRIVER={{{driver}}};SERVER={banco['servidor']};DATABASE={banco['nome']};"
+            f"UID={banco['usuario']};PWD={banco['senha']};"
+            "Encrypt=yes;TrustServerCertificate=no;Connection Timeout=60"
+        )                                                                            
+    else: # SQL Server local, autentiação do Windows
+        odbc = (
+            f"DRIVER={{{DRIVE}}};SERVER={SERVIDOR};DATABASE={BANCO};"
+            "Trusted_Connection=yes;TrustServerCertificate=yes"
+        )
 
-    odbc = (
-        f"DRIVER={{{DRIVE}}};SERVER={SERVIDOR};DATABASE={BANCO};"
-        f"UID={Usuario};PWD={Senha};" 
-        "TrustServerCertificate=yes"
-    )
-
-    return create_engine("mssql+pyodbc:///?odbc_connect="+ quote_plus (odbc))
+    return create_engine("mssql+pyodbc:///?odbc_connect="+ quote_plus(odbc))
 
 def consultar(sql):
     """ Executa a consulta no sql server e devolve o resultado como tabela"""
