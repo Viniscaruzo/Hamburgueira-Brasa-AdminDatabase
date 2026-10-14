@@ -55,11 +55,14 @@ WHERE Status = 'Entregue';
 # Q5. Delivery x Retirada por mês
 # Colunas do resultado: Mes, TipoEntrega, QuantidadePedidos
 Q5 = """
-Select 
-datename(MONTH,DataPedido) as Mes, CONVERT(int, count (IdPedido)) as detalhes 
-from Pedido	
-where TipoEntrega = 'delivery'
-Group by  datename(MONTH, DataPedido);
+SELECT YEAR(DataPedido) AS AnoPedido,
+MONTH(DataPedido) AS Mes, TipoEntrega,
+COUNT(*) AS QuantidadePedidos
+FROM Pedidos
+WHERE Status = 'Entregue' AND TipoEntrega IN ('Delivery', 'Retirada')
+GROUP BY YEAR(DataPedido), MONTH(DataPedido), TipoEntrega
+ORDER BY YEAR(DataPedido), MONTH(DataPedido), TipoEntrega;
+
 
 """
 
@@ -95,6 +98,15 @@ order by Quantidade desc
 # Q8. Unidades e faturamento por produto
 # Colunas do resultado: NomeProduto, UnidadesVendidas, Faturamento
 Q8 = """
+SELECT Produtos.NomeProduto,
+SUM(ItensPedido.Quantidade) AS UnidadesVendidas,
+SUM(ItensPedido.Quantidade * ItensPedido.PrecoUnitario) AS  Faturamento
+FROM Pedidos
+INNER JOIN ItensPedido ON Pedidos.IdPedido = ItensPedido.IdPedido
+INNER JOIN Produtos ON ItensPedido.IdProduto = Produtos.IdProduto
+WHERE Pedidos.Status = 'Entregue'
+GROUP BY Produtos.NomeProduto
+ORDER BY UnidadesVendidas DESC;
 
 """
 
@@ -102,11 +114,28 @@ Q8 = """
 # Colunas do resultado: Categoria, Faturamento
 Q9 = """
 
+SELECT Produtos.Categoria,
+SUM(ItensPedido.Quantidade * ItensPedido.PrecoUnitario) AS  Faturamento
+FROM Pedidos
+INNER JOIN ItensPedido ON Pedidos.IdPedido = ItensPedido.IdPedido
+INNER JOIN Produtos ON ItensPedido.IdProduto = Produtos.IdProduto
+WHERE Pedidos.Status = 'Entregue'
+GROUP BY Produtos.Categoria
+ORDER BY  Faturamento DESC;
+
 """
 
 # Q10. Bairros com 7+ pedidos entregues
 # Colunas do resultado: Bairro, PedidosEntregues
 Q10 = """
+
+SELECT Clientes.Bairro,
+COUNT(*) AS  PedidosEntregues
+FROM Pedidos
+INNER JOIN Clientes ON Clientes.IdCliente = Pedidos.IdCliente
+WHERE Pedidos.Status = 'Entregue'
+GROUP BY Clientes.Bairro
+HAVING COUNT(*) >= 7;
 
 """
 
@@ -114,6 +143,15 @@ Q10 = """
 # Colunas do resultado: PrecoUnitario, Unidades, Faturamento
 Q11 = """
 
+SELECT ItensPedido.PrecoUnitario,
+SUM(ItensPedido.Quantidade) AS Unidades,
+SUM(ItensPedido.Quantidade * ItensPedido.PrecoUnitario) AS Faturamento
+FROM ItensPedido
+INNER JOIN Produtos ON ItensPedido.IdProduto = Produtos.IdProduto
+INNER JOIN Pedidos ON ItensPedido.IdPedido = Pedidos.IdPedido
+WHERE Produtos.NomeProduto = 'X-Bacon' AND Pedidos.Status = 'Entregue'
+GROUP BY ItensPedido.PrecoUnitario
+ORDER BY ItensPedido.PrecoUnitario ASC; 
 """
 
 # ---------------------------------------------------------------------
@@ -123,12 +161,28 @@ Q11 = """
 # Q12. Top 3 clientes (fidelidade)
 # Colunas do resultado: Nome, Pedidos, TotalGasto
 Q12 = """
-
+SELECT Clientes.Nome,
+COUNT(DISTINCT Pedidos.IdPedido) AS Pedidos,
+SUM(ItensPedido.Quantidade * ItensPedido.PrecoUnitario) AS TotalGasto
+FROM Clientes
+INNER JOIN Pedidos ON Clientes.IdCliente = Pedidos.IdCliente
+INNER JOIN ItensPedido ON Pedidos.IdPedido = ItensPedido.IdPedido
+WHERE Pedidos.Status = 'Entregue'
+GROUP BY Clientes.Nome
+ORDER BY TotalGasto DESC;
 """
 
 # Q13. Faturamento mês a mês
 # Colunas do resultado: Mes, PedidosEntregues, Faturamento
 Q13 = """
+SELECT MONTH(Pedidos.DataPedido) AS Mes,
+COUNT(DISTINCT Pedidos.IdPedido) AS PedidosEntregues,
+SUM(ItensPedido.Quantidade * ItensPedido.PrecoUnitario) AS Faturamento
+FROM Pedidos
+INNER JOIN ItensPedido ON Pedidos.IdPedido = ItensPedido.IdPedido
+WHERE Pedidos.Status = 'Entregue'
+GROUP BY MONTH(Pedidos.DataPedido)
+ORDER BY Mes ASC;
 
 """
 
