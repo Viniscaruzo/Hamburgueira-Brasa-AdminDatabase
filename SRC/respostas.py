@@ -190,11 +190,29 @@ ORDER BY Mes ASC;
 # Colunas do resultado: Nome, Entregas, NotaMedia
 Q14 = """
 
+SELECT Entregadores.Nome,
+COUNT(Pedidos.IdPedido) AS Entregas,
+CAST(AVG(CAST(Pedidos.Avaliacao AS DECIMAL(10,2))) AS DECIMAL(10,2)) AS NotaMedia
+FROM Entregadores
+INNER JOIN Pedidos ON Entregadores.IdEntregador = Pedidos.IdEntregador
+WHERE Pedidos.Status = 'Entregue'
+GROUP BY Entregadores.Nome
+HAVING COUNT(Pedidos.IdPedido) >= 4 AND AVG(CAST(Pedidos.Avaliacao AS DECIMAL(10,2))) >= 4;
 """
 
 # Q15. Valor total dos pedidos de março
 # Colunas do resultado: IdPedido, Nome, ValorProdutos, TaxaEntrega, ValorTotal
 Q15 = """
+SELECT Pedidos.IdPedido, Clientes.Nome, Pedidos.TaxaEntrega, 
+SUM(ItensPedido.Quantidade * ItensPedido.PrecoUnitario) + Pedidos.TaxaEntrega AS ValorTotal,
+SUM(ItensPedido.Quantidade * ItensPedido.PrecoUnitario) AS ValorProdutos
+FROM Pedidos
+INNER JOIN Clientes ON Pedidos.IdCliente = Clientes.IdCliente
+INNER JOIN ItensPedido ON Pedidos.IdPedido = ItensPedido.IdPedido
+WHERE Pedidos.Status = 'Entregue' AND Pedidos.DataPedido >= '2026-03-01' AND Pedidos.DataPedido < '2026-04-01'
+GROUP BY Pedidos.IdPedido, Clientes.Nome,  Pedidos.TaxaEntrega
+ORDER BY ValorTotal DESC;
+
 
 """
 
