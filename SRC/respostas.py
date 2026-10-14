@@ -55,6 +55,11 @@ WHERE Status = 'Entregue';
 # Q5. Delivery x Retirada por mês
 # Colunas do resultado: Mes, TipoEntrega, QuantidadePedidos
 Q5 = """
+Select 
+datename(MONTH,DataPedido) as Mes, CONVERT(int, count (IdPedido)) as detalhes 
+from Pedido	
+where TipoEntrega = 'delivery'
+Group by  datename(MONTH, DataPedido);
 
 """
 
@@ -65,12 +70,25 @@ Q5 = """
 # Q6. Pedidos de janeiro com cliente
 # Colunas do resultado: IdPedido, DataPedido, Nome, Bairro, Status
 Q6 = """
+Select Pedidos.IdPedido, Pedidos.DataPedido, Clientes.Nome, Clientes.Bairro, Pedidos.Status
+from Pedidos 
+inner join Clientes on Pedidos.IdCliente = Clientes.idCliente
+Where Pedidos.DataPedido >= '2026-01-01' and Pedidos.DataPedido < '2026-02-01' 
+order by Pedidos.Datapedido asc;
+
 
 """
 
 # Q7. Entregas por entregador
 # Colunas do resultado: Nome, Entregas
 Q7 = """
+Select Entregadores.Nome,
+count (Pedidos.idPedido) as Quantidade 
+from Entregadores 
+inner join Pedidos on Entregadores.IdEntregador = Pedidos.IdEntregador
+Where Pedidos.Status = 'Entregue' 
+Group By Entregadores.Nome 
+order by Quantidade desc 
 
 """
 
